@@ -145,7 +145,7 @@ namespace ChromED_RP6
                                 Console.Error.WriteLine($"[WARN] zlib produced {got}/{outBuf.Length} bytes for type {i}.");
                             
                             result.Add(outBuf);
-                            ////////Debug.WriteLine($"[INFO] DefinedType[{i}] zlib-decompressed: {uncompressedSize} bytes.");
+                            Debug.WriteLine($"[INFO] DefinedType[{i}] zlib-decompressed: {uncompressedSize} bytes.");
                         }
                         else
                         {
@@ -177,7 +177,7 @@ namespace ChromED_RP6
                 else
                 {
                     result.Add(null);
-                    ////////Debug.WriteLine($"[INFO] DefinedType[{i}] not compressed (offset {dataFileOffsetUnits} units / {dataFileOffsetBytes} bytes, size {uncompressedSize}).");
+                    Debug.WriteLine($"[INFO] DefinedType[{i}] not compressed (offset {dataFileOffsetUnits} units / {dataFileOffsetBytes} bytes, size {uncompressedSize}).");
                 }
             }
 
@@ -195,7 +195,7 @@ namespace ChromED_RP6
 
                 string fullText = FileHelpers.GetNullTerminatedString(namesBuffer, (int)namesIndices[i]);
                 string baseName = FileHelpers.SanitizeFileName(fullText);
-                string typeName = EResType.GetName((EResType.Type)filetype);
+                string typeName = EResType.GetPrettyName((EResType.Type)filetype);
 
                 var fileParts = new List<byte[]>();
                 for (int p = 0; p < entryCount; p++)
@@ -243,7 +243,7 @@ namespace ChromED_RP6
                         }
 
                         Buffer.BlockCopy(dec, (int)UnitsToBytes(dataOffsetUnits), part, 0, (int)dataSize);
-                        ////////Debug.WriteLine($"[INFO] Read part {p} from decompressed section {physSection} offset {dataOffsetUnits} units ({UnitsToBytes(dataOffsetUnits)} bytes) size {dataSize}");
+                        Debug.WriteLine($"[INFO] Read part {p} from decompressed section {physSection} offset {dataOffsetUnits} units ({UnitsToBytes(dataOffsetUnits)} bytes) size {dataSize}");
                     }
                     else
                     {
@@ -277,7 +277,7 @@ namespace ChromED_RP6
                             break;
                         }
 
-                        ////////Debug.WriteLine($"[INFO] Read part {p} from file offset {absoluteOffsetBytes} size {dataSize}");
+                        Debug.WriteLine($"[INFO] Read part {p} from file offset {absoluteOffsetBytes} size {dataSize}");
                     }
 
                     fileParts.Add(part);
@@ -458,7 +458,7 @@ namespace ChromED_RP6
                 }
                 else
                 {
-                    ////////Debug.WriteLine($"[INFO] Texture {info.BaseName}, with textureHeader.Format of {textureHeader.Format} supports only DX9.");
+                    Debug.WriteLine($"[INFO] Texture {info.BaseName}, with textureHeader.Format of {textureHeader.Format} supports only DX9.");
                 }
 
                 using var output = File.OpenWrite(outputFile);
@@ -507,7 +507,7 @@ namespace ChromED_RP6
 
                 // write texture data
                 output.Write(info.Parts[1], 0, info.Parts[1].Length);
-                ////////Debug.WriteLine($"[OUT] Wrote {outputFile} ({new FileInfo(outputFile).Length} bytes)");
+                Debug.WriteLine($"[OUT] Wrote {outputFile} ({new FileInfo(outputFile).Length} bytes)");
             }
 
             private static void WriteAnimation(ResourceInfo info)

@@ -134,4 +134,13 @@ public class EResType
         }
         return "_INVALID_";
     }
+    
+    public static string GetPrettyName(Type t)
+    {
+        foreach (var e in Table)
+        {
+            if (e.Id == t) return e.PrettyName;
+        }
+        return "_INVALID_";
+    }
 }
