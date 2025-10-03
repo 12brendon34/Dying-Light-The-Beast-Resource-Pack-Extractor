@@ -1,0 +1,63 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+
+    # Publish on Linux runner
+    - name: Publish (Linux)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      shell: bash
+      run: |
+        dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
+
+    # Publish on Windows runner
+    - name: Publish (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: pwsh
+      run: |
+        dotnet publish .\ChromED_RP6\ChromED_RP6.csproj -c Release -r win-x64 --self-contained true -o .\publish\windows
+
+    # Upload artifact from Linux build
+    - name: Upload artifact (Linux)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: publish/linux
+
+    # Upload artifact from Windows build
+    - name: Upload artifact (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: publish/windows
