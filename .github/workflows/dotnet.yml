@@ -21,7 +21,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
 
     - name: Restore dependencies
       run: dotnet restore
@@ -32,16 +32,32 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
-    - name: Publish self-contained binaries
+    # Publish on Linux runner
+    - name: Publish (Linux)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      shell: bash
       run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
-        else
-          dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r win-x64 --self-contained true -o ./publish/windows
-        fi
+        dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
 
-    - name: Upload artifact
+    # Publish on Windows runner
+    - name: Publish (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: pwsh
+      run: |
+        dotnet publish .\ChromED_RP6\ChromED_RP6.csproj -c Release -r win-x64 --self-contained true -o .\publish\windows
+
+    # Upload artifact from Linux build
+    - name: Upload artifact (Linux)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.os }}-build
-        path: ./publish
+        name: linux-build
+        path: publish/linux
+
+    # Upload artifact from Windows build
+    - name: Upload artifact (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: publish/windows
