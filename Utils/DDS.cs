@@ -1,5 +1,7 @@
 
-namespace ChromED_RP6;
+using Utils.Resources;
+
+namespace Utils;
 
 /// <summary>
 /// DirectDraw Surface (DDS) format definitions.
@@ -211,10 +213,9 @@ public static class DDS
     }
 
     /// <summary>
-    /// Gets the DDS_PIXELFORMAT definition for a given Utils.EFormat.
-    /// Uses DX10 for most modern formats, falls back to DX9-compatible bitmasks when applicable.
+    /// Gets the DDS_PIXELFORMAT definition for ResourceTypeInfo.EFormat.
     /// </summary>
-    public static DDS_PIXELFORMAT GetPixelFormat(Utils.EFormat textureFormat)
+    public static DDS_PIXELFORMAT GetPixelFormat(ResourceTypeInfo.EFormat textureFormat)
     {
         const uint DDS_PIXELFORMAT_SIZE = 32;
 
@@ -228,37 +229,37 @@ public static class DDS
         switch (textureFormat)
         {
             // --- DX9 legacy formats (previously commented out) ---
-            case Utils.EFormat.R5G6B5:
+            case ResourceTypeInfo.EFormat.R5G6B5:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgb, 16, 0xF800, 0x07E0, 0x001F, 0);
                 break;
 
-            case Utils.EFormat.R8G8B8:
+            case ResourceTypeInfo.EFormat.R8G8B8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgb, 24, 0x00FF0000, 0x0000FF00, 0x000000FF, 0);
                 break;
 
-            case Utils.EFormat.B8G8R8:
+            case ResourceTypeInfo.EFormat.B8G8R8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgb, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
                 break;
 
-            case Utils.EFormat.A8R8G8B8:
-            case Utils.EFormat.A8R8G8B8_GAMMA:
+            case ResourceTypeInfo.EFormat.A8R8G8B8:
+            case ResourceTypeInfo.EFormat.A8R8G8B8_GAMMA:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgba, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
                 break;
 
-            case Utils.EFormat.X8B8G8R8:
+            case ResourceTypeInfo.EFormat.X8B8G8R8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgb, 32, 0x0000FF00, 0x00FF0000, 0xFF000000, 0);
                 break;
 
-            case Utils.EFormat.B8G8R8A8:
-            case Utils.EFormat.B8G8R8X8:
+            case ResourceTypeInfo.EFormat.B8G8R8A8:
+            case ResourceTypeInfo.EFormat.B8G8R8X8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgba, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
                 break;
 
-            case Utils.EFormat.X8R8G8B8:
+            case ResourceTypeInfo.EFormat.X8R8G8B8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Rgb, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0);
                 break;
 
-            case Utils.EFormat.D24FS8:
+            case ResourceTypeInfo.EFormat.D24FS8:
                 pixelFormat = CreateBitmaskFormat(PixelFormatFlags.Luminance, 32, 0xFFFFFF00, 0, 0, 0x000000FF);
                 break;
 

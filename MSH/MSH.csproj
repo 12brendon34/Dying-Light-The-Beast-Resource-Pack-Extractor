@@ -5,13 +5,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>ChromED_RP6</RootNamespace>
     </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Ecng.Lzma" Version="1.0.63" />
-      <PackageReference Include="Iconic.Zlib.Netstandard" Version="1.0.0" />
-    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Utils\Utils.csproj" />

@@ -2,6 +2,11 @@
 using System.Text;
 using Ionic.Zlib;
 
+using Utils;
+using Utils.IO;
+using Utils.Files;
+using Utils.Resources;
+
 namespace ChromED_RP6
 {
     abstract class Program
@@ -41,11 +46,11 @@ namespace ChromED_RP6
             using var input = File.OpenRead(inputFile);
             long fileLength = input.Length;
 
-            var mainHeader = Utils.StructReader.ReadStruct<RDPMainHeader>(input);
+            var mainHeader = StreamHelpers.ReadStruct<RDPMainHeader>(input);
 
-            var definedTypes = Utils.ReadArray<RDPResourceTypeHeader>(input, (int)mainHeader.PhysResTypeCount);
-            var physEntries = Utils.ReadArray<RDPResourceEntryHeader>(input, (int)mainHeader.PhysResCount);
-            var logHeaders = Utils.ReadArray<RDPLogicalResourceEntryHeader>(input, (int)mainHeader.ResourceNamesCount);
+            var definedTypes = StreamHelpers.ReadArray<RDPResourceTypeHeader>(input, (int)mainHeader.PhysResTypeCount);
+            var physEntries = StreamHelpers.ReadArray<RDPResourceEntryHeader>(input, (int)mainHeader.PhysResCount);
+            var logHeaders = StreamHelpers.ReadArray<RDPLogicalResourceEntryHeader>(input, (int)mainHeader.ResourceNamesCount);
 
             // names offsets
             uint[] namesIndices = new uint[mainHeader.ResourceNamesCount];
@@ -140,7 +145,7 @@ namespace ChromED_RP6
                                 Console.Error.WriteLine($"[WARN] zlib produced {got}/{outBuf.Length} bytes for type {i}.");
                             
                             result.Add(outBuf);
-                            Debug.WriteLine($"[INFO] DefinedType[{i}] zlib-decompressed: {uncompressedSize} bytes.");
+                            ////////Debug.WriteLine($"[INFO] DefinedType[{i}] zlib-decompressed: {uncompressedSize} bytes.");
                         }
                         else
                         {
@@ -172,7 +177,7 @@ namespace ChromED_RP6
                 else
                 {
                     result.Add(null);
-                    Debug.WriteLine($"[INFO] DefinedType[{i}] not compressed (offset {dataFileOffsetUnits} units / {dataFileOffsetBytes} bytes, size {uncompressedSize}).");
+                    ////////Debug.WriteLine($"[INFO] DefinedType[{i}] not compressed (offset {dataFileOffsetUnits} units / {dataFileOffsetBytes} bytes, size {uncompressedSize}).");
                 }
             }
 
@@ -188,9 +193,9 @@ namespace ChromED_RP6
                 int entryCount = (int)(logHeader.Bitfields & 0xFFu);
                 int currentResource = (int)logHeader.FirstResource;
 
-                string fullText = Utils.GetNullTerminatedString(namesBuffer, (int)namesIndices[i]);
-                string baseName = Utils.SanitizeFileName(fullText);
-                string typeName = Utils.GetResourceName((int)filetype);
+                string fullText = FileHelpers.GetNullTerminatedString(namesBuffer, (int)namesIndices[i]);
+                string baseName = FileHelpers.SanitizeFileName(fullText);
+                string typeName = EResType.GetName((EResType.Type)filetype);
 
                 var fileParts = new List<byte[]>();
                 for (int p = 0; p < entryCount; p++)
@@ -238,7 +243,7 @@ namespace ChromED_RP6
                         }
 
                         Buffer.BlockCopy(dec, (int)UnitsToBytes(dataOffsetUnits), part, 0, (int)dataSize);
-                        Debug.WriteLine($"[INFO] Read part {p} from decompressed section {physSection} offset {dataOffsetUnits} units ({UnitsToBytes(dataOffsetUnits)} bytes) size {dataSize}");
+                        ////////Debug.WriteLine($"[INFO] Read part {p} from decompressed section {physSection} offset {dataOffsetUnits} units ({UnitsToBytes(dataOffsetUnits)} bytes) size {dataSize}");
                     }
                     else
                     {
@@ -272,7 +277,7 @@ namespace ChromED_RP6
                             break;
                         }
 
-                        Debug.WriteLine($"[INFO] Read part {p} from file offset {absoluteOffsetBytes} size {dataSize}");
+                        ////////Debug.WriteLine($"[INFO] Read part {p} from file offset {absoluteOffsetBytes} size {dataSize}");
                     }
 
                     fileParts.Add(part);
@@ -313,10 +318,10 @@ namespace ChromED_RP6
         {
             private static readonly Dictionary<int, Action<ResourceInfo>> Handlers = new()
             {
-                { (int)Utils.ResourceType.Texture, WriteTexture },
-                { (int)Utils.ResourceType.Animation, WriteAnimation },
-                //{ (int)Utils.ResourceType.Fx, WriteFx }, //removed
-                { (int)Utils.ResourceType.BuilderInformation, WriteBuilderInformation }
+                { (int)EResType.Type.Texture, WriteTexture },
+                { (int)EResType.Type.Animation, WriteAnimation },
+                //{ (int)ResourceTypeInfo.Fx, WriteFx }, //removed
+                { (int)EResType.Type.BuilderInformation, WriteBuilderInformation }
                 // add more mappings here
             };
 
@@ -350,12 +355,12 @@ namespace ChromED_RP6
                 }
                 
                 string outputFile = Path.Combine(info.OutputDir, info.BaseName + ".dds");
-                outputFile = Utils.MakeUniqueFilename(outputFile);
+                outputFile = FileHelpers.MakeUniqueFilename(outputFile);
 
                 using var textureHeaderStream = new MemoryStream(info.Parts[0]);
-                var textureHeader = Utils.StructReader.ReadStruct<RTextureInfo>(textureHeaderStream);
+                var textureHeader = StreamHelpers.ReadStruct<RTextureInfo>(textureHeaderStream);
                 
-                var infoFmt = Utils.FormatInfo.Get(textureHeader.Format);
+                var infoFmt = ResourceTypeInfo.FormatInfo.Get(textureHeader.Format);
                 uint pitchOrLinearSize;
                 
                 if (infoFmt.IsBlockCompressed)
@@ -436,7 +441,7 @@ namespace ChromED_RP6
                 // extended DX10 header if needed
                 var dx10Header = new DDS.DDS_HEADER_DX10
                 {
-                    DxgiFormat = Utils.GetDXGIFormat(textureHeader.Format),
+                    DxgiFormat = ResourceTypeInfo.GetDXGIFormat(textureHeader.Format),
                     ResourceDimension = DDS.D3D10_RESOURCE_DIMENSION.Texture2D,
                     MiscFlag = 0,
                     ArraySize = 1,
@@ -453,56 +458,56 @@ namespace ChromED_RP6
                 }
                 else
                 {
-                    Debug.WriteLine($"[INFO] Texture {info.BaseName}, with textureHeader.Format of {textureHeader.Format} supports only DX9.");
+                    ////////Debug.WriteLine($"[INFO] Texture {info.BaseName}, with textureHeader.Format of {textureHeader.Format} supports only DX9.");
                 }
 
                 using var output = File.OpenWrite(outputFile);
 
                 // write magic
-                Utils.WriteU32(output, DDS_MAGIC);
+                StreamHelpers.WriteU32(output, DDS_MAGIC);
 
                 // write header
-                Utils.WriteU32(output, header.Size);
-                Utils.WriteU32(output, header.Flags);
-                Utils.WriteU32(output, header.Height);
-                Utils.WriteU32(output, header.Width);
-                Utils.WriteU32(output, header.PitchOrLinearSize);
-                Utils.WriteU32(output, header.Depth);
-                Utils.WriteU32(output, header.MipMapCount);
+                StreamHelpers.WriteU32(output, header.Size);
+                StreamHelpers.WriteU32(output, header.Flags);
+                StreamHelpers.WriteU32(output, header.Height);
+                StreamHelpers.WriteU32(output, header.Width);
+                StreamHelpers.WriteU32(output, header.PitchOrLinearSize);
+                StreamHelpers.WriteU32(output, header.Depth);
+                StreamHelpers.WriteU32(output, header.MipMapCount);
 
                 foreach (uint v in header.Reserved1)
-                    Utils.WriteU32(output, v);
+                    StreamHelpers.WriteU32(output, v);
 
                 // pixel format
-                Utils.WriteU32(output, header.PixelFormat.Size);
-                Utils.WriteU32(output, header.PixelFormat.Flags);
-                Utils.WriteU32(output, header.PixelFormat.FourCC);
-                Utils.WriteU32(output, header.PixelFormat.RGBBitCount);
-                Utils.WriteU32(output, header.PixelFormat.RBitMask);
-                Utils.WriteU32(output, header.PixelFormat.GBitMask);
-                Utils.WriteU32(output, header.PixelFormat.BBitMask);
-                Utils.WriteU32(output, header.PixelFormat.ABitMask);
+                StreamHelpers.WriteU32(output, header.PixelFormat.Size);
+                StreamHelpers.WriteU32(output, header.PixelFormat.Flags);
+                StreamHelpers.WriteU32(output, header.PixelFormat.FourCC);
+                StreamHelpers.WriteU32(output, header.PixelFormat.RGBBitCount);
+                StreamHelpers.WriteU32(output, header.PixelFormat.RBitMask);
+                StreamHelpers.WriteU32(output, header.PixelFormat.GBitMask);
+                StreamHelpers.WriteU32(output, header.PixelFormat.BBitMask);
+                StreamHelpers.WriteU32(output, header.PixelFormat.ABitMask);
 
                 // caps
-                Utils.WriteU32(output, header.Caps);
-                Utils.WriteU32(output, header.Caps2);
-                Utils.WriteU32(output, header.Caps3);
-                Utils.WriteU32(output, header.Caps4);
-                Utils.WriteU32(output, header.Reserved2);
+                StreamHelpers.WriteU32(output, header.Caps);
+                StreamHelpers.WriteU32(output, header.Caps2);
+                StreamHelpers.WriteU32(output, header.Caps3);
+                StreamHelpers.WriteU32(output, header.Caps4);
+                StreamHelpers.WriteU32(output, header.Reserved2);
 
                 // optional DX10
                 if (header.PixelFormat.FourCC == DDS.MakeFourCC("DX10"))
                 {
-                    Utils.WriteU32(output, (uint)dx10Header.DxgiFormat);
-                    Utils.WriteU32(output, (uint)dx10Header.ResourceDimension);
-                    Utils.WriteU32(output, dx10Header.MiscFlag);
-                    Utils.WriteU32(output, dx10Header.ArraySize);
-                    Utils.WriteU32(output, dx10Header.MiscFlags2);
+                    StreamHelpers.WriteU32(output, (uint)dx10Header.DxgiFormat);
+                    StreamHelpers.WriteU32(output, (uint)dx10Header.ResourceDimension);
+                    StreamHelpers.WriteU32(output, dx10Header.MiscFlag);
+                    StreamHelpers.WriteU32(output, dx10Header.ArraySize);
+                    StreamHelpers.WriteU32(output, dx10Header.MiscFlags2);
                 }
 
                 // write texture data
                 output.Write(info.Parts[1], 0, info.Parts[1].Length);
-                Debug.WriteLine($"[OUT] Wrote {outputFile} ({new FileInfo(outputFile).Length} bytes)");
+                ////////Debug.WriteLine($"[OUT] Wrote {outputFile} ({new FileInfo(outputFile).Length} bytes)");
             }
 
             private static void WriteAnimation(ResourceInfo info)
@@ -514,7 +519,7 @@ namespace ChromED_RP6
                 string outName = info.BaseName + ".anm2";
 
                 string outputFile = Path.Combine(info.OutputDir, outName);
-                outputFile = Utils.MakeUniqueFilename(outputFile);
+                outputFile = FileHelpers.MakeUniqueFilename(outputFile);
 
                 File.WriteAllBytes(outputFile, part);
             }
@@ -532,7 +537,7 @@ namespace ChromED_RP6
                     }
 
                     string outputFile = Path.Combine(info.OutputDir, outName);
-                    outputFile = Utils.MakeUniqueFilename(outputFile);
+                    outputFile = FileHelpers.MakeUniqueFilename(outputFile);
 
                     File.WriteAllBytes(outputFile, part);
                 }
@@ -546,7 +551,7 @@ namespace ChromED_RP6
                 {
                     string filename = Path.Combine(info.OutputDir, $"{info.LogicalIndex:D4}_{info.BaseName}_part{index:D2}.bin");
 
-                    filename = Utils.MakeUniqueFilename(filename);
+                    filename = FileHelpers.MakeUniqueFilename(filename);
                     File.WriteAllBytes(filename, part);
                     index++;
                 }

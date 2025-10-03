@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Utils.Resources;
 
 namespace ChromED_RP6;
 //changed in DL2's CE 6.5
@@ -36,7 +37,7 @@ public struct RTextureInfo
     public ushort Width;
     public ushort Height;
     public ushort Depth;
-    public Utils.EFormat Format;
+    public ResourceTypeInfo.EFormat Format;
 
     private byte Tex_Mip; // lower 2 bits = tex_type, upper 6 bits = mip_count
     public byte TexType
