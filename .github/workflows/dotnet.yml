@@ -35,9 +35,9 @@ jobs:
     - name: Publish self-contained binaries
       run: |
         if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          dotnet publish -c Release -r linux-x64 --self-contained true -o ./publish/linux
+          dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
         else
-          dotnet publish -c Release -r win-x64 --self-contained true -o ./publish/windows
+          dotnet publish ./ChromED_RP6/ChromED_RP6.csproj -c Release -r win-x64 --self-contained true -o ./publish/windows
         fi
 
     - name: Upload artifact
